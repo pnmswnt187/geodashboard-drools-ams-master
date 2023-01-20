@@ -1,0 +1,43 @@
+package com.steria.geodashboard.brms.geodashboard_ams_rules.rule;
+
+import com.steria.geodashboard.brms.common.model.Config;
+import com.steria.geodashboard.brms.common.model.Tag;
+import com.steria.geodashboard.brms.common.model.TagAlert;
+
+// 1. Match the Tag and Config to create the TagAlert object for further process
+rule "Match Tag Config with SubId"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$tag : Tag(subId != "")
+		$config : Config(tagId == $tag.id, subId == $tag.subId, startTime != null, endTime != null
+			, $tag.currentDate.before(endTime)
+			, $tag.currentDate.equals(startTime) || $tag.currentDate.after(startTime)
+			, (muteStartDate != null && $tag.currentDate.before(muteStartDate)) || muteStartDate == null
+			, (muteEndDate != null &&  $tag.currentDate.after(muteEndDate)) || muteEndDate == null)
+	then
+		TagAlert alert = new TagAlert();
+		alert.setTag($tag);
+		alert.setConfig($config);
+		printTagAlert("Check_Threshold", "Match Tag Config with SubId", alert, logger);
+		insertLogical(alert);
+end
+
+rule "Match Tag Config without SubId"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$tag : Tag(subId == "")
+		$config : Config(tagId == $tag.id, startTime != null, endTime != null
+			, $tag.currentDate.before(endTime)
+			, $tag.currentDate.equals(startTime) || $tag.currentDate.after(startTime)
+			, (muteStartDate != null && $tag.currentDate.before(muteStartDate)) || muteStartDate == null
+			, (muteEndDate != null &&  $tag.currentDate.after(muteEndDate)) || muteEndDate == null)
+		not $tagWithSubId : Tag(id == $config.tagId, subId == $config.subId)
+	then
+		TagAlert alert = new TagAlert();
+		alert.setTag($tag);
+		alert.setConfig($config);
+		printTagAlert("Check_Threshold", "Match Tag Config without SubId", alert, logger);
+		insertLogical(alert);
+end

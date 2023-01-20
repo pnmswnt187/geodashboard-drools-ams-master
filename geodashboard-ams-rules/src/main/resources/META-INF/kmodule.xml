@@ -1,0 +1,5 @@
+<kmodule xmlns="http://jboss.org/kie/6.0.0/kmodule" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <kbase name="geo-dashboard" default="true" eventProcessingMode="stream" equalsBehavior="identity" packages="com.steria.geodashboard.brms.geodashboard_ams_rules, com.steria.geodashboard.brms.geodashboard_ams_rules.rule, com.steria.geodashboard.brms.geodashboard_ams_rules.data, com.steria.geodashboard.brms.geodashboard_ams_rules.config, com.steria.geodashboard.brms.geodashboard_ams_rules.process">
+    <ksession name="geo-dashboard-kiesession" type="stateful" default="true" clockType="realtime"/>
+  </kbase>
+</kmodule>

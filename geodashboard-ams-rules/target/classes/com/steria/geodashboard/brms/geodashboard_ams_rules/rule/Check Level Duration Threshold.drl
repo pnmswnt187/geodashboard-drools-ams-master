@@ -1,0 +1,40 @@
+package com.steria.geodashboard.brms.geodashboard_ams_rules.rule;
+
+import com.steria.geodashboard.brms.common.model.ConfigLevelDuration;
+import com.steria.geodashboard.brms.common.model.TagAlert;
+import com.steria.geodashboard.brms.common.model.TagLevelDuration;
+
+// 1. Condition to raise alert: (threshold check) && (duration check, if exists)
+// 2. value is compulsory for TagLevelDuration
+// 3. levelThld are compulsory for ConfigLevelDuration
+rule "Check Level Duration Threshold - Intermediate"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$alert : TagAlert(durationIntermediateAlert == false)
+		$tag : TagLevelDuration(this == $alert.tag, value != null)
+		$config : ConfigLevelDuration(this == $alert.config, startTime != null, endTime != null
+			, $tag.currentDate.before(endTime)
+			, $tag.currentDate.equals(startTime) || $tag.currentDate.after(startTime)
+			, levelThld != null && < $tag.value)
+	then
+		$alert.setDurationIntermediateAlert(true);
+		printTagAlert("Check_Threshold", "Check Level Duration Threshold - Intermediate", $alert, logger);
+		update($alert);
+end
+
+rule "Check Level Duration Threshold - Final"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$alert : TagAlert(durationIntermediateAlert == true, finalAlert == false)
+		$tag : TagLevelDuration(this == $alert.tag, value != null)
+		$config : ConfigLevelDuration(this == $alert.config, startTime != null, endTime != null
+			, $tag.currentDate.before(endTime)
+			, $tag.currentDate.equals(startTime) || $tag.currentDate.after(startTime)
+			, alertDelayDurationPeriod == null || ($tag.alertStartDate != null && $tag.currentDate.after(getDateAfterDuration($tag.alertStartDate, alertDelayDurationPeriod)) == true))
+	then
+		$alert.setFinalAlert(true);
+		printTagAlert("Check_Threshold", "Check Level Duration Threshold - Final", $alert, logger);
+		update($alert);
+end

@@ -1,0 +1,47 @@
+package com.steria.geodashboard.brms.geodashboard_ams_rules.rule
+
+import com.steria.geodashboard.brms.common.model.TagAlert;
+import com.steria.geodashboard.brms.common.model.ConfigLims;
+import com.steria.geodashboard.brms.common.model.TagLims;
+
+// 1. Condition to raise alert: (lowerThld check) || (upperThld check)
+// 2. value is compulsory for TagLims
+// 3. Empty lowerThld/upperThld implies no threshold for lower/upper bound applied
+// 4. For alertStatus, 0=no alert, 1=lower threshold hit alert, 2=upper threshold hit alert
+
+
+rule "Check Lower Lims Threshold"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$tag : TagLims(value != null)
+		$config : ConfigLims(tagId == $tag.id, startTime != null, endTime != null
+			, $tag.currentDate.before(endTime)
+			, $tag.currentDate.equals(startTime) || $tag.currentDate.after(startTime)
+			, (lowerThld != null && > $tag.value))
+		$alert : TagAlert(tag == $tag, config == $config, finalAlert == false)
+	then
+		$alert.setFinalAlert(true);
+		$alert.setAlertStatus(1);
+		printTagAlert("Check_Threshold", "Check Lims Threshold", $alert, logger);
+		update($alert);
+
+end
+
+rule "Check Upper Lims Threshold"
+    ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$tag : TagLims(value != null)
+		$config : ConfigLims(tagId == $tag.id, startTime != null, endTime != null
+			, $tag.currentDate.before(endTime)
+			, $tag.currentDate.equals(startTime) || $tag.currentDate.after(startTime)
+			, (upperThld != null && < $tag.value))
+		$alert : TagAlert(tag == $tag, config == $config, finalAlert == false)
+	then
+		$alert.setFinalAlert(true);
+		$alert.setAlertStatus(2);
+		printTagAlert("Check_Threshold", "Check Lims Threshold", $alert, logger);
+		update($alert);
+end
+

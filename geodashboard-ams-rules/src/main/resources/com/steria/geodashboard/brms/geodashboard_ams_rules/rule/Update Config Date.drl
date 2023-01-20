@@ -1,0 +1,16 @@
+package com.steria.geodashboard.brms.geodashboard_ams_rules.rule;
+
+import com.steria.geodashboard.brms.common.model.Tag;
+import com.steria.geodashboard.brms.common.model.Config;
+
+rule "Update Date Time for Configurations"
+	ruleflow-group "Initialize_Configuration"
+	dialect "mvel"
+	when
+		$tag: Tag()
+		$config : Config(tagId == $tag.id, startTime == null || endTime == null)
+	then
+		$config.setAlertStartEndTimestampWithDate($tag.currentDate);
+		printConfig("Initialize_Configuration", "Update Date Time for Configurations", $config, logger);
+		update($config);
+end

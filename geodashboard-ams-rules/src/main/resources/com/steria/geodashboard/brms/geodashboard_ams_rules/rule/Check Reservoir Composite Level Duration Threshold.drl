@@ -1,0 +1,68 @@
+package com.steria.geodashboard.brms.geodashboard_ams_rules.rule;
+
+import com.steria.geodashboard.brms.common.model.ConfigReservoirCompositeLevelDuration;
+import com.steria.geodashboard.brms.common.model.TagAlert;
+import com.steria.geodashboard.brms.common.model.TagReservoirCompositeLevelDuration;
+
+// 1. Condition to raise alarm ~ 1st type of alarm: (pump running count check) && (stock percentage check) && (duration check, if exists)
+// 1. Condition to raise alarm ~ 2nd type of alarm: (pump running count check) && (gate open count check) && (duration check, if exists)
+// 1. Condition to raise alarm ~ 3rd type of alarm: (IPU flow check) && (gate open count check) && (duration check, if exists)
+// 2. 1st alarm ~ pumpRunCount and stockQtyPerc is compulsory for TagReservoirCompositeLevelDuration
+// 2. 2nd alarm ~ pumpRunCount and gateOpenCount is compulsory for TagReservoirCompositeLevelDuration
+// 2. 3rd alarm ~ gateOpenCount and ipuFlow is compulsory for TagReservoirCompositeLevelDuration
+// 3. 1st alarm ~ pumpRunCountThld and stockQtyPercThld is compulsory for ConfigReservoirCompositeLevelDuration
+// 3. 2nd alarm ~ pumpRunCountThld and gateOpenCountThld is compulsory for ConfigReservoirCompositeLevelDuration
+// 3. 3rd alarm ~ gateOpenCountThld and ipuFlowThld is compulsory for ConfigReservoirCompositeLevelDuration
+rule "Check Reservoir Composite Level Duration Threshold - Intermediate"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$alert : TagAlert(durationIntermediateAlert == false)
+		$tag : TagReservoirCompositeLevelDuration(this == $alert.tag 
+			, (pumpRunCount != null && stockQtyPerc != null) ||
+			(pumpRunCount != null && gateOpenCount != null) ||
+			(gateOpenCount != null && ipuFlow != null))
+		$config : ConfigReservoirCompositeLevelDuration(this == $alert.config, startTime != null, endTime != null
+			, $tag.currentDate.before(endTime)
+			, $tag.currentDate.equals(startTime) || $tag.currentDate.after(startTime)
+			, (pumpRunCountThld != null && pumpRunCountThld == $tag.pumpRunCount && stockQtyPercThld != null && stockQtyPercThld <= $tag.stockQtyPerc) ||
+			(pumpRunCountThld != null && pumpRunCountThld == $tag.pumpRunCount && gateOpenCountThld != null && gateOpenCountThld <= $tag.gateOpenCount) ||
+			(gateOpenCountThld != null && gateOpenCountThld <= $tag.gateOpenCount && ipuFlowThld != null && ipuFlowThld < $tag.ipuFlow))
+	then
+		$alert.setDurationIntermediateAlert(true);
+		printTagAlert("Check_Threshold", "Check Reservoir Composite Level Duration Threshold - Intermediate", $alert, logger);
+		update($alert);
+end
+
+rule "Check Reservoir Composite Level Duration Threshold - Final"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$alert : TagAlert(durationIntermediateAlert == true, hasFulfillFinalAlert == false)
+		$tag : TagReservoirCompositeLevelDuration(this == $alert.tag, (pumpRunCount != null && stockQtyPerc != null) ||
+			(pumpRunCount != null && gateOpenCount != null) ||
+			(gateOpenCount != null && ipuFlow != null))
+		$config : ConfigReservoirCompositeLevelDuration(this == $alert.config, startTime != null, endTime != null
+			, $tag.currentDate.before(endTime)
+			, $tag.currentDate.equals(startTime) || $tag.currentDate.after(startTime)
+			, alertDelayDurationPeriod == null || ($tag.alertStartDate != null && $tag.currentDate.after(getDateAfterDuration($tag.alertStartDate, alertDelayDurationPeriod)) == true))
+	then
+		$alert.setFinalAlert(true);
+		$alert.setHasFulfillFinalAlert(true);
+		printTagAlert("Check_Threshold", "Check Reservoir Composite Level Duration Threshold - Final", $alert, logger);
+		update($alert);
+end
+
+rule "Check Reservoir Composite Level Duration Threshold - True Alert"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$alert : TagAlert(finalAlert == true, hasFulfillFinalAlert == true)
+		$config : ConfigReservoirCompositeLevelDuration(levelPriority != null) from $alert.config
+		$higherAlert : TagAlert(finalAlert == true, hasFulfillFinalAlert == true, alertStatus == $alert.alertStatus)
+		$higherConfig : ConfigReservoirCompositeLevelDuration(levelPriority!=null && > $config.levelPriority) from $higherAlert.config		
+	then
+		$alert.setFinalAlert(false);
+		printTagAlert("Check_Threshold", "Check Reservoir Composite Level Duration Threshold - True Alert", $alert, logger);
+		update($alert);
+end

@@ -1,0 +1,5 @@
+package com.steria.geodashboard.brms.geodashboard_ams_rules;
+
+import org.slf4j.Logger;
+
+global org.slf4j.Logger logger;

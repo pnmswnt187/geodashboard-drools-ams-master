@@ -1,0 +1,13 @@
+package com.steria.geodashboard.brms.geodashboard_ams_rules.rule;
+
+import com.steria.geodashboard.brms.common.model.Tag;
+import com.steria.geodashboard.brms.common.model.Config;
+
+rule "Initialization - Print Tag Info"
+	ruleflow-group "Initialize_Configuration"
+	dialect "mvel"
+	when
+		$tag: Tag()
+	then
+		printTag("Initialize_Configuration", "Initialization - Tag Info", $tag, logger);
+end

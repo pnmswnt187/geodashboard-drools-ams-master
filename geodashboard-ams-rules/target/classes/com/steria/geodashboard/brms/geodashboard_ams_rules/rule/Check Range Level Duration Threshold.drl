@@ -1,0 +1,99 @@
+package com.steria.geodashboard.brms.geodashboard_ams_rules.rule;
+
+import com.steria.geodashboard.brms.common.model.ConfigRangeLevelDuration;
+import com.steria.geodashboard.brms.common.model.TagAlert;
+import com.steria.geodashboard.brms.common.model.TagRangeLevelDuration;
+
+// 1. Condition to raise alert: (lowerThld check) || (upperThld check)
+// 2. value is compulsory for TagRange
+// 3. Empty lowerThld/upperThld implies no threshold for lower/upper bound applied
+// 4. For rangeAlertStatus, 0=no alert, 1=lower threshold hit alert, 2=upper threshold hit alert
+
+rule "Check Lower Range Level Duration Threshold - Intermediate"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$alert : TagAlert(durationIntermediateAlert == false)
+		$tag : TagRangeLevelDuration(this == $alert.tag, value != null)
+		$config : ConfigRangeLevelDuration(this == $alert.config, startTime != null, endTime != null
+			, $tag.currentDate.before(endTime)
+			, $tag.currentDate.equals(startTime) || $tag.currentDate.after(startTime)
+			, (lowerThld != null && > $tag.value))
+	then
+		$alert.setDurationIntermediateAlert(true);
+		$alert.setAlertStatus(1);
+		printTagAlert("Check_Threshold", "Check Lower Range Level Duration Threshold - Intermediate", $alert, logger);
+		update($alert);
+end
+
+rule "Check Upper Range Level Duration Threshold - Intermediate"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$alert : TagAlert(durationIntermediateAlert == false)
+		$tag : TagRangeLevelDuration(this == $alert.tag, value != null)
+		$config : ConfigRangeLevelDuration(this == $alert.config, startTime != null, endTime != null
+			, $tag.currentDate.before(endTime)
+			, $tag.currentDate.equals(startTime) || $tag.currentDate.after(startTime)
+			, (upperThld != null && < $tag.value))
+	then
+		$alert.setDurationIntermediateAlert(true);
+		$alert.setAlertStatus(2);
+		printTagAlert("Check_Threshold", "Check Upper Range Level Duration Threshold - Intermediate", $alert, logger);
+		update($alert);
+end
+
+rule "Check Lower Range Level Duration Threshold - Final"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$alert : TagAlert(durationIntermediateAlert == true, hasFulfillFinalAlert == false)
+		$tag : TagRangeLevelDuration(this == $alert.tag, value != null)
+		$config : ConfigRangeLevelDuration(this == $alert.config, startTime != null, endTime != null
+			, $tag.currentDate.before(endTime)
+			, $tag.currentDate.equals(startTime) || $tag.currentDate.after(startTime)
+			, (lowerThld != null && > $tag.value)
+			, levelPriority != null
+			, alertDelayDurationPeriod == null || ($tag.alertStartDate != null && $tag.currentDate.after(getDateAfterDuration($tag.alertStartDate, alertDelayDurationPeriod)) == true))
+	then
+		$alert.setHasFulfillFinalAlert(true);
+		$alert.setFinalAlert(true);
+		printTagAlert("Check_Threshold", "Check Lower Range Level Duration Threshold - Final", $alert, logger);
+		update($alert);
+end
+
+rule "Check Upper Range Level Duration Threshold - Final"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$alert : TagAlert(durationIntermediateAlert == true, hasFulfillFinalAlert == false)
+		$tag : TagRangeLevelDuration(this == $alert.tag, value != null)
+		$config : ConfigRangeLevelDuration(this == $alert.config, startTime != null, endTime != null
+			, $tag.currentDate.before(endTime)
+			, $tag.currentDate.equals(startTime) || $tag.currentDate.after(startTime)
+			, (upperThld != null && < $tag.value)
+			, levelPriority != null
+			, alertDelayDurationPeriod == null || ($tag.alertStartDate != null && $tag.currentDate.after(getDateAfterDuration($tag.alertStartDate, alertDelayDurationPeriod)) == true))
+	then
+		$alert.setHasFulfillFinalAlert(true);
+		$alert.setFinalAlert(true);
+		printTagAlert("Check_Threshold", "Check Upper Range Level Duration Threshold - Final", $alert, logger);
+		update($alert);
+end
+
+rule "Check All Range Level Duration Threshold - True Alert"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$alert : TagAlert(finalAlert == true, hasFulfillFinalAlert == true)
+		$config : ConfigRangeLevelDuration(levelPriority != null) from $alert.config
+		//$config : ConfigRangeLevelDuration (this==$alert.config)
+		$higherAlert : TagAlert(finalAlert == true, hasFulfillFinalAlert == true, alertStatus == $alert.alertStatus)
+		//$higherConfig : ConfigRangeLevelDuration(this==$higherAlert.config, levelPriority > $config.levelPriority)
+		$higherConfig : ConfigRangeLevelDuration(levelPriority!=null && > $config.levelPriority) from $higherAlert.config		
+	then
+		$alert.setFinalAlert(false);
+		printTagAlert("Check_Threshold", "Check All Range Level Duration Threshold - True Alert", $alert, logger);
+		printConfig("Check_Threshold", "Check All Range Level Duration Threshold - True Alert",$config,logger)
+		update($alert);
+end

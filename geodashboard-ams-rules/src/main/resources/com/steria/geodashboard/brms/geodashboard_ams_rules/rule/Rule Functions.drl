@@ -1,0 +1,38 @@
+package com.steria.geodashboard.brms.geodashboard_ams_rules.rule;
+
+import org.slf4j.Logger;
+import java.util.Calendar;
+import java.util.Date;
+import com.steria.geodashboard.brms.common.model.Config;
+import com.steria.geodashboard.brms.common.model.Tag;
+import com.steria.geodashboard.brms.common.model.TagAlert;
+
+function Date getDateAfterDuration(Date date, Integer minDuration){
+	Calendar cal = Calendar.getInstance();
+	cal.setTime(date);
+	cal.add(Calendar.MINUTE, minDuration);
+	return cal.getTime();
+}
+
+function printConfig(String group, String ruleName, Config config, Logger logger){
+	String message = "[" + group + "]\t[" + ruleName
+		+ "]\t" + config.toString();
+	outputMessage(message, logger);
+}
+
+function printTag(String group, String ruleName, Tag tag, Logger logger){
+	String message = "[" + group + "]\t[" + ruleName
+		+ "]\t" + tag.toString();
+	outputMessage(message, logger);
+}
+
+function printTagAlert(String group, String ruleName, TagAlert alert, Logger logger){
+	String message = "[" + group + "]\t[" + ruleName
+		+ "]\t" + alert.toString();
+	outputMessage(message, logger);
+}
+
+function outputMessage(String message, Logger logger){
+	// logger.info(message);
+	System.out.println(message);
+}

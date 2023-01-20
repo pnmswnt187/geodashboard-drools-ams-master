@@ -1,0 +1,59 @@
+package com.steria.geodashboard.brms.geodashboard_ams_rules.rule;
+
+import com.steria.geodashboard.brms.common.model.ConfigPumpLevel;
+import com.steria.geodashboard.brms.common.model.TagAlert;
+import com.steria.geodashboard.brms.common.model.TagPumpLevel;
+
+// 1. Condition to raise alarm: (pump count check) && (level check, if exists) && (duration check, if exists)
+// 2. pumpCount is compulsory for TagPump
+// 3. pumpCountLowerThld is compulsory for ConfigPump
+// 4. Empty levelUpperThld/duration implies condition is satisfied by default
+rule "Check Pump Level Threshold - Intermediate"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$alert : TagAlert(durationIntermediateAlert == false)
+		$tag : TagPumpLevel(this == $alert.tag, pumpCount != null)
+		$config : ConfigPumpLevel(this == $alert.config, startTime != null, endTime != null
+			, $tag.currentDate.before(endTime)
+			, $tag.currentDate.equals(startTime) || $tag.currentDate.after(startTime)
+			, pumpCountLowerThld != null && > $tag.pumpCount
+			, levelUpperThld == null || ($tag.level != null && levelUpperThld < $tag.level))
+	then
+		$alert.setDurationIntermediateAlert(true);
+		printTagAlert("Check_Threshold", "Check Pump Level Threshold - Intermediate", $alert, logger);
+		update($alert);
+end
+
+rule "Check Pump Level Threshold - Final"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$alert : TagAlert(durationIntermediateAlert == true, hasFulfillFinalAlert == false)
+		$tag : TagPumpLevel(this == $alert.tag, pumpCount != null)
+		$config : ConfigPumpLevel(this == $alert.config, startTime != null, endTime != null
+			, $tag.currentDate.before(endTime)
+			, $tag.currentDate.equals(startTime) || $tag.currentDate.after(startTime)
+			, alertDelayDurationPeriod == null || ($tag.alertStartDate != null && $tag.currentDate.after(getDateAfterDuration($tag.alertStartDate, alertDelayDurationPeriod)) == true))
+	then
+		$alert.setFinalAlert(true);
+		$alert.setHasFulfillFinalAlert(true);
+		printTagAlert("Check_Threshold", "Check Pump Level Threshold - Final", $alert, logger);
+		update($alert);
+end
+
+rule "Check Pump Level Threshold - True Alert"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$alert : TagAlert(finalAlert == true, hasFulfillFinalAlert == true)
+		$config : ConfigPumpLevel(levelPriority != null) from $alert.config
+		//$config : ConfigRangeLevelDuration (this==$alert.config)
+		$higherAlert : TagAlert(finalAlert == true, hasFulfillFinalAlert == true, alertStatus == $alert.alertStatus)
+		//$higherConfig : ConfigRangeLevelDuration(this==$higherAlert.config, levelPriority > $config.levelPriority)
+		$higherConfig : ConfigPumpLevel(levelPriority!=null && > $config.levelPriority) from $higherAlert.config		
+	then
+		$alert.setFinalAlert(false);
+		printTagAlert("Check_Threshold", "Check Pump Level Threshold - True Alert", $alert, logger);
+		update($alert);
+end

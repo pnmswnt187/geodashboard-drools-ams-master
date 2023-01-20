@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- origin at X=0.0 Y=0.0 -->
+<bpmn2:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmn20="http://www.omg.org/bpmn20" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:bpsim="http://www.bpsim.org/schemas/1.0" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:drools="http://www.jboss.org/drools" xmlns="http://www.jboss.org/drools" xmlns:java="http://www.java.com/javaTypes" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd http://www.jboss.org/drools drools.xsd http://www.bpsim.org/schemas/1.0 bpsim.xsd" id="_53Hg8Bi3EeWXrPZn_PNf-w" exporter="org.eclipse.bpmn2.modeler.core" exporterVersion="1.1.2.Final" expressionLanguage="http://www.mvel.org/2.0" targetNamespace="http://www.omg.org/bpmn20" typeLanguage="http://www.java.com/javaTypes">
+  <bpmn2:itemDefinition id="ItemDefinition_3" isCollection="false" structureRef="org.joda.time.LocalDateTime.Property"/>
+  <bpmn2:itemDefinition id="ItemDefinition_4" isCollection="false" structureRef="org.joda.time.LocalDateTime"/>
+  <bpmn2:process id="geodashboard_ams_rules.process.Main_Threshold_Process" drools:packageName="com.steria.geodashboard.brms.geodashboard_ams_rules.process" drools:version="1.0" name="Main_Threshold_Process" isExecutable="true">
+    <bpmn2:extensionElements>
+      <drools:import name="org.joda.time.LocalDateTime"/>
+      <drools:import name="org.joda.time.LocalDateTime.Property"/>
+    </bpmn2:extensionElements>
+    <bpmn2:startEvent id="processStartEvent" drools:bgcolor="#9acd32" drools:selectable="true" name="Start Event">
+      <bpmn2:outgoing>SequenceFlow_1</bpmn2:outgoing>
+    </bpmn2:startEvent>
+    <bpmn2:sequenceFlow id="SequenceFlow_1" drools:bgcolor="#000000" drools:selectable="true" drools:priority="1" sourceRef="processStartEvent" targetRef="BusinessRuleTask_3"/>
+    <bpmn2:businessRuleTask id="BusinessRuleTask_1" drools:selectable="true" drools:ruleFlowGroup="Check_Threshold" drools:scriptFormat="http://www.java.com/java" name="Check Threshold">
+      <bpmn2:extensionElements>
+        <drools:onEntry-script scriptFormat="http://www.java.com/java">
+          <drools:script>System.out.println(&quot;>>>>>[&quot;+(new LocalDateTime())+&quot;] Check Threshold - Start>>>>>&quot;);</drools:script>
+        </drools:onEntry-script>
+        <drools:onExit-script scriptFormat="http://www.java.com/java">
+          <drools:script>System.out.println(&quot;&lt;&lt;&lt;&lt;&lt;[&quot;+(new LocalDateTime())+&quot;] Check Threshold - End&lt;&lt;&lt;&lt;&lt;&quot;);</drools:script>
+        </drools:onExit-script>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SequenceFlow_2</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_3</bpmn2:outgoing>
+    </bpmn2:businessRuleTask>
+    <bpmn2:endEvent id="EndEvent_1" drools:bgcolor="#ff6347" drools:selectable="true" name="End Event">
+      <bpmn2:incoming>SequenceFlow_3</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:sequenceFlow id="SequenceFlow_3" drools:bgcolor="#000000" drools:selectable="true" drools:priority="1" sourceRef="BusinessRuleTask_1" targetRef="EndEvent_1"/>
+    <bpmn2:businessRuleTask id="BusinessRuleTask_3" drools:selectable="true" drools:ruleFlowGroup="Initialize_Configuration" drools:scriptFormat="http://www.java.com/java" name="Initialize Configuration">
+      <bpmn2:extensionElements>
+        <drools:onEntry-script scriptFormat="http://www.java.com/java">
+          <drools:script>System.out.println(&quot;>>>>>[&quot;+(new LocalDateTime())+&quot;] Initialize Configuration - Start>>>>>&quot;);</drools:script>
+        </drools:onEntry-script>
+        <drools:onExit-script scriptFormat="http://www.java.com/java">
+          <drools:script>System.out.println(&quot;&lt;&lt;&lt;&lt;&lt;[&quot;+(new LocalDateTime())+&quot;] Initialize Configuration - End&lt;&lt;&lt;&lt;&lt;&quot;);</drools:script>
+        </drools:onExit-script>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SequenceFlow_1</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_2</bpmn2:outgoing>
+    </bpmn2:businessRuleTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_2" drools:priority="1" sourceRef="BusinessRuleTask_3" targetRef="BusinessRuleTask_1"/>
+  </bpmn2:process>
+  <bpmndi:BPMNDiagram id="_53Hg8Ri3EeWXrPZn_PNf-w">
+    <bpmndi:BPMNPlane id="_53Hg8hi3EeWXrPZn_PNf-w" bpmnElement="geodashboard_ams_rules.process.Main_Threshold_Process">
+      <bpmndi:BPMNShape id="_53Hg8xi3EeWXrPZn_PNf-w" bpmnElement="processStartEvent">
+        <dc:Bounds height="30.0" width="30.0" x="120.0" y="165.0"/>
+        <bpmndi:BPMNLabel id="BPMNLabel_1">
+          <dc:Bounds height="15.0" width="58.0" x="106.0" y="195.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_53Hg9hi3EeWXrPZn_PNf-w" bpmnElement="BusinessRuleTask_1">
+        <dc:Bounds height="47.0" width="131.0" x="490.0" y="156.0"/>
+        <bpmndi:BPMNLabel id="BPMNLabel_3">
+          <dc:Bounds height="15.0" width="94.0" x="508.0" y="172.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_53Hg-Bi3EeWXrPZn_PNf-w" bpmnElement="EndEvent_1">
+        <dc:Bounds height="28.0" width="28.0" x="735.0" y="166.0"/>
+        <bpmndi:BPMNLabel id="BPMNLabel_4">
+          <dc:Bounds height="15.0" width="55.0" x="722.0" y="194.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_BusinessRuleTask_1" bpmnElement="BusinessRuleTask_3">
+        <dc:Bounds height="47.0" width="131.0" x="250.0" y="156.0"/>
+        <bpmndi:BPMNLabel id="BPMNLabel_5">
+          <dc:Bounds height="15.0" width="121.0" x="255.0" y="172.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="_53Hg9Ri3EeWXrPZn_PNf-w" bpmnElement="SequenceFlow_1" sourceElement="_53Hg8xi3EeWXrPZn_PNf-w" targetElement="BPMNShape_BusinessRuleTask_1">
+        <di:waypoint xsi:type="dc:Point" x="150.0" y="180.0"/>
+        <di:waypoint xsi:type="dc:Point" x="200.0" y="180.0"/>
+        <di:waypoint xsi:type="dc:Point" x="250.0" y="179.0"/>
+        <bpmndi:BPMNLabel id="BPMNLabel_6"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="_53Hg-Ri3EeWXrPZn_PNf-w" bpmnElement="SequenceFlow_3" sourceElement="_53Hg9hi3EeWXrPZn_PNf-w" targetElement="_53Hg-Bi3EeWXrPZn_PNf-w">
+        <di:waypoint xsi:type="dc:Point" x="621.0" y="179.0"/>
+        <di:waypoint xsi:type="dc:Point" x="678.0" y="179.0"/>
+        <di:waypoint xsi:type="dc:Point" x="735.0" y="180.0"/>
+        <bpmndi:BPMNLabel id="BPMNLabel_7"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_1" bpmnElement="SequenceFlow_2" sourceElement="BPMNShape_BusinessRuleTask_1" targetElement="_53Hg9hi3EeWXrPZn_PNf-w">
+        <di:waypoint xsi:type="dc:Point" x="381.0" y="179.0"/>
+        <di:waypoint xsi:type="dc:Point" x="435.0" y="179.0"/>
+        <di:waypoint xsi:type="dc:Point" x="490.0" y="179.0"/>
+        <bpmndi:BPMNLabel id="BPMNLabel_8"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn2:definitions>

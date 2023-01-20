@@ -1,0 +1,55 @@
+package com.steria.geodashboard.brms.geodashboard_ams_rules.rule;
+
+import com.steria.geodashboard.brms.common.model.ConfigLevelDurationStatus;
+import com.steria.geodashboard.brms.common.model.TagAlert;
+import com.steria.geodashboard.brms.common.model.TagLevelDurationStatus;
+
+// 1. Condition to raise alert: (status check) && (duration check, if exists)
+// 2. value is compulsory for TagLevelDurationStatus
+// 3. status are compulsory for ConfigLevelDurationStatus
+rule "Check Level Duration Status - Intermediate"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$alert : TagAlert(durationIntermediateAlert == false)
+		$tag : TagLevelDurationStatus(this == $alert.tag, value != null)
+		$config : ConfigLevelDurationStatus(this == $alert.config, startTime != null, endTime != null
+			, $tag.currentDate.before(endTime)
+			, $tag.currentDate.equals(startTime) || $tag.currentDate.after(startTime)
+			, status != null && == $tag.value)
+	then
+		$alert.setDurationIntermediateAlert(true);
+		printTagAlert("Check_Threshold", "Check Level Duration Status - Intermediate", $alert, logger);
+		update($alert);
+end
+
+rule "Check Level Duration Status - Final"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$alert : TagAlert(durationIntermediateAlert == true, hasFulfillFinalAlert == false)
+		$tag : TagLevelDurationStatus(this == $alert.tag, value != null)
+		$config : ConfigLevelDurationStatus(this == $alert.config, startTime != null, endTime != null
+			, $tag.currentDate.before(endTime)
+			, $tag.currentDate.equals(startTime) || $tag.currentDate.after(startTime)
+			, alertDelayDurationPeriod == null || ($tag.alertStartDate != null && $tag.currentDate.after(getDateAfterDuration($tag.alertStartDate, alertDelayDurationPeriod)) == true))
+	then
+		$alert.setFinalAlert(true);
+		$alert.setHasFulfillFinalAlert(true);
+		printTagAlert("Check_Threshold", "Check Level Duration Status - Final", $alert, logger);
+		update($alert);
+end
+
+rule "Check Level Duration Status - True Alert"
+	ruleflow-group "Check_Threshold"
+	dialect "mvel"
+	when
+		$alert : TagAlert(finalAlert == true, hasFulfillFinalAlert == true)
+		$config : ConfigLevelDurationStatus(levelPriority != null) from $alert.config
+		$higherAlert : TagAlert(finalAlert == true, hasFulfillFinalAlert == true, alertStatus == $alert.alertStatus)
+		$higherConfig : ConfigLevelDurationStatus(levelPriority!=null && > $config.levelPriority) from $higherAlert.config		
+	then
+		$alert.setFinalAlert(false);
+		printTagAlert("Check_Threshold", "Check Level Duration Status - True Alert", $alert, logger);
+		update($alert);
+end
